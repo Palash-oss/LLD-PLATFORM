@@ -56,7 +56,7 @@ export class LLMEvaluator implements Evaluator{
 
 //building prompt building the text we sent to gemini and we tell ai exactly
 //what to format to respond in JSON
-private buildPormpt(submission:Submission,rubric:Rubric):string {
+private buildPrompt(submission:Submission,rubric:Rubric):string {
     const dimensionsList=rubric.dimensions
     .map((d,index)=>`${index+1}. ${d.name}: ${d.description}`).join('\n');
 
