@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Problem {
+  id                        String   @id @default(cuid())
+  title                     String
+  slug                      String   @unique
+  statement                 String
+  functionalRequirements    String
+  nonFunctionalRequirements String
+  difficulty                String
+  createdAt                 DateTime @default(now())
+
+  rubric   Rubric?
+  attempts Attempt[]
+}
+
+model Rubric {
+  id               String @id @default(cuid())
+  problemId        String @unique
+  expectedClasses  String
+  expectedPatterns String
+  dimensions       String
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model Attempt {
+  id          String    @id @default(cuid())
+  learnerId   String
+  problemId   String
+  status      String    @default("in_progress")
+  createdAt   DateTime  @default(now())
+  submittedAt DateTime?
+
+  problem    Problem     @relation(fields: [problemId], references: [id])
+  submission Submission?
+  feedback   Feedback?
+}
+
+model Submission {
+  id               String   @id @default(cuid())
+  attemptId        String   @unique
+  classDesign      String
+  responsibilities String
+  tradeoffs        String
+  rawText          String   @default("")
+  createdAt        DateTime @default(now())
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id                   String   @id @default(cuid())
+  attemptId            String   @unique
+  deterministicResults String
+  llmResults           String   @default("[]")
+  summary              String   @default("")
+  overallSignal        String   @default("needs_work")
+  llmAvailable         Boolean  @default(false)
+  comparedToPrevious   String?
+  createdAt            DateTime @default(now())
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
