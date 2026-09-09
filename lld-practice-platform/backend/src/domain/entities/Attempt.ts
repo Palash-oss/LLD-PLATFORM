@@ -21,10 +21,8 @@ export interface Attempt{
     problemId:string;//foreign key to the problem being attempted
 
 
-    code:string;//the code the learner wrote
-
-
     status:AttemptStatus;//current status in the state machine
+
 
 
     createdAt:Date;//when attempt started

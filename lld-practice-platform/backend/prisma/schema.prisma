@@ -22,11 +22,12 @@ model Problem {
 }
 
 model Rubric {
-  id               String @id @default(cuid())
-  problemId        String @unique
-  expectedClasses  String
-  expectedPatterns String
-  dimensions       String
+  id                  String @id @default(cuid())
+  problemId           String @unique
+  expectedClasses     String
+  expectedPatterns    String
+  exampleClassDiagram String @default("")
+  dimensions          String
 
   problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 }
@@ -47,7 +48,8 @@ model Attempt {
 model Submission {
   id               String   @id @default(cuid())
   attemptId        String   @unique
-  classDesign      String
+  classDiagram     String   @default("")
+  methodSignatures String   @default("")
   responsibilities String
   tradeoffs        String
   rawText          String   @default("")

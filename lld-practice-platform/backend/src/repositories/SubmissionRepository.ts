@@ -13,17 +13,17 @@ export class SubmissionRepository {
     const row = await this.prisma.submission.create({
       data: {
         attemptId,
-        classDesign: input.classDesign,
+        classDiagram: input.classDiagram,
+        methodSignatures: input.methodSignatures,
         responsibilities: input.responsibilities,
         tradeoffs: input.tradeoffs,
         rawText: input.rawText ?? '',
-     
       },
     });
     return this.mapToDomain(row);
   }
 
-  //findByAttemptId() — Get submission for an attempt 
+  // findByAttemptId() — Get submission for an attempt 
   async findByAttemptId(attemptId: string): Promise<Submission | null> {
     const row = await this.prisma.submission.findUnique({ where: { attemptId } });
     if (!row) return null;
@@ -34,7 +34,8 @@ export class SubmissionRepository {
     return {
       id: row.id,
       attemptId: row.attemptId,
-      classDesign: row.classDesign,
+      classDiagram: row.classDiagram ?? '',
+      methodSignatures: row.methodSignatures ?? '',
       responsibilities: row.responsibilities,
       tradeoffs: row.tradeoffs,
       rawText: row.rawText,
