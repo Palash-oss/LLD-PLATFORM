@@ -19,7 +19,7 @@ export class LLMEvaluator implements Evaluator {
       const rawResponse = await Promise.race([
         this.provider.generate(prompt),
         new Promise<string>((_, reject) =>
-          setTimeout(() => reject(new Error('LLM timeout after 15s')), 15000)
+          setTimeout(() => reject(new Error('LLM timeout after 45s')), 45000)
         ),
       ]);
 
@@ -90,10 +90,8 @@ ${dimensionsList}
     summary: string;
     overallSignal: OverallSignal;
   } {
-    const cleaned = raw
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    const cleaned = match ? match[0] : raw;
 
     const parsed = JSON.parse(cleaned);
 

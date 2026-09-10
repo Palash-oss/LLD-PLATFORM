@@ -4,14 +4,14 @@ import { env } from '../../config/env';
 
 export class GeminiProvider implements AIProvider {
   private genAI: GoogleGenerativeAI;
-  private primaryModelName: string = 'gemini-3.6-flash';
+  private primaryModelName: string = 'gemini-2.5-flash';
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(env.geminiApiKey);
   }
 
   async generate(prompt: string): Promise<string> {
-    const modelsToTry = [this.primaryModelName, 'gemini-2.5-flash', 'gemini-1.5-flash-latest'];
+    const modelsToTry = [this.primaryModelName, 'gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
     let lastError: any = null;
 
     for (const modelName of modelsToTry) {

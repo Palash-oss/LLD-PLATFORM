@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import { ArrowLeft, Clock, CheckCircle2, XCircle, TrendingUp, TrendingDown, Sparkles, AlertCircle, Award } from 'lucide-react';
+import {
+  ArrowLeft, Clock, CheckCircle2, XCircle, TrendingUp, TrendingDown,
+  Sparkles, AlertCircle, Award, ChevronDown, ChevronRight, Code2,
+  FileText, Scale, Layers, BookOpen
+} from 'lucide-react';
 
 interface Props {
   attemptId: string;
@@ -10,12 +14,20 @@ interface Props {
 
 export function FeedbackPage({ attemptId, onBack, onHistory }: Props) {
   const [feedback, setFeedback] = useState<any>(null);
+  const [submission, setSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showSubmission, setShowSubmission] = useState(false);
 
   useEffect(() => {
-    api.getFeedback(attemptId)
-      .then(setFeedback)
+    Promise.all([
+      api.getFeedback(attemptId),
+      api.getSubmission(attemptId).catch(() => null), // don't fail if not available
+    ])
+      .then(([fb, sub]) => {
+        setFeedback(fb);
+        setSubmission(sub);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [attemptId]);
@@ -42,7 +54,14 @@ export function FeedbackPage({ attemptId, onBack, onHistory }: Props) {
   if (!feedback) return null;
 
   const signalClass = `signal-${feedback.overallSignal.replace('_', '-')}`;
-  const signalLabel = feedback.overallSignal === 'needs_work' ? 'Needs Work' : feedback.overallSignal === 'solid' ? 'Solid' : 'Strong';
+  const signalLabel = feedback.overallSignal === 'needs_work' ? 'Needs Work'
+    : feedback.overallSignal === 'solid' ? 'Solid' : 'Strong';
+
+  // Only show "Progress vs Previous" if there are actual regression/improvement notes
+  // (not just first-attempt baseline labels which are incorrectly labelled as improvements)
+  const validDiffNotes = feedback.comparedToPrevious?.filter(
+    (n: any) => n.type === 'improvement' || n.type === 'regression'
+  ) ?? [];
 
   return (
     <div className="container page">
@@ -72,7 +91,7 @@ export function FeedbackPage({ attemptId, onBack, onHistory }: Props) {
         </div>
       )}
 
-      {/* Summary */}
+      {/* AI Summary */}
       {feedback.summary && (
         <div className="feedback-summary">
           <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -82,20 +101,18 @@ export function FeedbackPage({ attemptId, onBack, onHistory }: Props) {
         </div>
       )}
 
-      {/* Diff notes compared to previous attempt */}
-      {feedback.comparedToPrevious && feedback.comparedToPrevious.length > 0 && (
+      {/* Progress vs Previous — only render if comparing to a real previous attempt */}
+      {validDiffNotes.length > 0 && (
         <div className="diff-section">
           <div className="diff-title">
             <TrendingUp size={16} /> Progress vs Previous Attempt
           </div>
-          {feedback.comparedToPrevious.map((note: any, i: number) => (
+          {validDiffNotes.map((note: any, i: number) => (
             <div key={i} className={`diff-item diff-${note.type}`}>
               {note.type === 'improvement' ? (
                 <TrendingUp size={18} className="diff-improvement" />
-              ) : note.type === 'regression' ? (
-                <TrendingDown size={18} className="diff-regression" />
               ) : (
-                <Sparkles size={18} style={{ color: 'var(--accent)' }} />
+                <TrendingDown size={18} className="diff-regression" />
               )}
               <span>{note.label}</span>
             </div>
@@ -144,6 +161,68 @@ export function FeedbackPage({ attemptId, onBack, onHistory }: Props) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Your Submission — collapsible review panel */}
+      {submission && (
+        <div className="section">
+          <button
+            className="submission-toggle"
+            onClick={() => setShowSubmission(!showSubmission)}
+          >
+            <BookOpen size={16} style={{ color: 'var(--accent)' }} />
+            <span>Review Your Submission</span>
+            {showSubmission ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+
+          {showSubmission && (
+            <div className="submission-panel">
+              {/* Class Diagram */}
+              {submission.classDiagram && (
+                <div className="sub-field">
+                  <div className="sub-field-label">
+                    <Layers size={14} style={{ color: 'var(--accent)' }} />
+                    Visual Class Diagram
+                  </div>
+                  <pre className="sub-field-code">{submission.classDiagram}</pre>
+                </div>
+              )}
+
+              {/* Method Signatures */}
+              {submission.methodSignatures && (
+                <div className="sub-field">
+                  <div className="sub-field-label">
+                    <Code2 size={14} style={{ color: 'var(--accent)' }} />
+                    Method Signatures
+                  </div>
+                  <pre className="sub-field-code">{submission.methodSignatures}</pre>
+                </div>
+              )}
+
+              {/* Responsibilities */}
+              {submission.responsibilities && (
+                <div className="sub-field">
+                  <div className="sub-field-label">
+                    <FileText size={14} style={{ color: 'var(--accent)' }} />
+                    Responsibility Breakdown
+                  </div>
+                  <p className="sub-field-text">{submission.responsibilities}</p>
+                </div>
+              )}
+
+              {/* Trade-offs */}
+              {submission.tradeoffs && (
+                <div className="sub-field">
+                  <div className="sub-field-label">
+                    <Scale size={14} style={{ color: 'var(--accent)' }} />
+                    Trade-offs & Decisions
+                  </div>
+                  <p className="sub-field-text">{submission.tradeoffs}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

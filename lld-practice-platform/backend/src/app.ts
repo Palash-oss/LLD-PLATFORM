@@ -51,7 +51,7 @@ export function createApp(): Application {
 
   // Services
   const problemService = new ProblemService(problemRepo);
-  const attemptService = new AttemptService(attemptRepo, problemRepo);
+  const attemptService = new AttemptService(attemptRepo, problemRepo, submissionRepo);
   const submissionService = new SubmissionService(
     attemptRepo,
     submissionRepo,

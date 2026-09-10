@@ -1,15 +1,19 @@
 import { AttemptRepository } from '../repositories/AttemptRepository';
+import { SubmissionRepository } from '../repositories/SubmissionRepository';
 import { ProblemRepository } from '../repositories/ProblemRepository';
 import { Attempt } from '../domain/entities/Attempt';
 import { Feedback } from '../domain/entities/Feedback';
+import { Submission } from '../domain/entities/Submission';
 
 export class AttemptService {
   private attemptRepo: AttemptRepository;
   private problemRepo: ProblemRepository;
+  private submissionRepo: SubmissionRepository;
 
-  constructor(attemptRepo: AttemptRepository, problemRepo: ProblemRepository) {
+  constructor(attemptRepo: AttemptRepository, problemRepo: ProblemRepository, submissionRepo: SubmissionRepository) {
     this.attemptRepo = attemptRepo;
     this.problemRepo = problemRepo;
+    this.submissionRepo = submissionRepo;
   }
 
   // Start a new attempt for a learner on a problem
@@ -57,5 +61,12 @@ export class AttemptService {
     }
 
     return feedback;
+  }
+
+  // Get the submission content for an attempt (what the learner actually wrote)
+  async getSubmission(attemptId: string): Promise<Submission | null> {
+    const attempt = await this.getAttempt(attemptId);
+    if (attempt.status === 'in_progress') return null;
+    return this.submissionRepo.findByAttemptId(attemptId);
   }
 }

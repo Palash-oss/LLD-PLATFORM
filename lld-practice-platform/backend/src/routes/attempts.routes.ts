@@ -81,5 +81,15 @@ export function createAttemptsRouter(
     }
   });
 
+  // GET /api/attempts/:id/submission — get what the learner wrote
+  router.get('/:id/submission', async (req: Request, res: Response) => {
+    try {
+      const submission = await attemptService.getSubmission(req.params.id);
+      res.json({ success: true, data: submission });
+    } catch (err: any) {
+      res.status(404).json({ success: false, error: err.message });
+    }
+  });
+
   return router;
 }

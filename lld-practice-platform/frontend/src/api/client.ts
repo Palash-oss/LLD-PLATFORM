@@ -27,5 +27,6 @@ export const api = {
     }
   ) => request<any>(`/attempts/${id}/submit`, { method: 'POST', body: JSON.stringify(body) }),
   getFeedback: (id: string) => request<any>(`/attempts/${id}/feedback`),
+  getSubmission: (id: string) => request<any>(`/attempts/${id}/submission`),
   getHistory: (learnerId: string) => request<any[]>(`/learners/${learnerId}/history`),
 };
