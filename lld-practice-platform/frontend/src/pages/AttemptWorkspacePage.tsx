@@ -28,7 +28,6 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
     api.getProblem(problemSlug).then(setProblem);
   }, [problemSlug]);
 
-  // Poll status when submitted
   useEffect(() => {
     if (!submitted) return;
     const interval = setInterval(async () => {
@@ -47,14 +46,25 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!form.classDiagram.trim() || !form.methodSignatures.trim() || !form.responsibilities.trim() || !form.tradeoffs.trim()) {
-      setError('All fields (Class Diagram, Method Signatures, Responsibilities, and Trade-offs) are required.');
+
+    // Relaxed validation — just require all fields to be non-empty
+    if (!form.classDiagram.trim()) {
+      setError('Please add a class diagram — even a rough one with 2-3 classes is enough to start.');
       return;
     }
-    if (form.tradeoffs.trim().length < 20) {
-      setError('Trade-off explanation must be at least 20 characters.');
+    if (!form.methodSignatures.trim()) {
+      setError('Please add at least a few method signatures for your classes.');
       return;
     }
+    if (!form.responsibilities.trim()) {
+      setError('Please describe how you split responsibilities across classes.');
+      return;
+    }
+    if (!form.tradeoffs.trim()) {
+      setError('Please note at least one trade-off or design decision you made.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await api.submitAttempt(attemptId, form);
@@ -72,9 +82,9 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
         <div className="status-bar">
           <span className={`status-dot ${status === 'evaluating' ? 'status-dot-evaluating' : status === 'evaluated' ? 'status-dot-done' : 'status-dot-failed'}`} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {status === 'evaluating' && <Loader2 size={18} className="loading-spinner" style={{ animation: 'spin 1s linear infinite' }} />}
+            {status === 'evaluating' && <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />}
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {status === 'evaluating' ? 'Evaluating your design solution — analyzing Mermaid diagram & trade-offs...' : status === 'evaluated' ? 'Evaluation complete. Redirecting to feedback...' : 'Evaluation failed.'}
+              {status === 'evaluating' ? 'Evaluating your design — running rule checks and AI analysis...' : status === 'evaluated' ? 'Evaluation complete. Loading your feedback...' : 'Evaluation failed. Please try again.'}
             </span>
           </div>
         </div>
@@ -92,7 +102,7 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
 
       <div className="page-header">
         <h1 className="page-title">{problem?.title ?? 'Attempt Workspace'}</h1>
-        <p className="page-subtitle">Design your low-level architecture using Mermaid syntax with live visual preview.</p>
+        <p className="page-subtitle">Design your low-level architecture. Use Mermaid syntax for the diagram — a rough design is fine to start, you can improve with each attempt.</p>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -105,12 +115,14 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
             <div className="diagram-editor-col">
               <textarea
                 className="form-textarea form-textarea-mono"
-                rows={11}
+                rows={12}
                 placeholder={exampleDiagram}
                 value={form.classDiagram}
                 onChange={(e) => setForm({ ...form, classDiagram: e.target.value })}
               />
-              <p className="form-hint">Type Mermaid <code>classDiagram</code> syntax. (Arrow <code>--&gt;</code> indicates association/dependency).</p>
+              <p className="form-hint">
+                Type Mermaid <code>classDiagram</code> syntax. Use <code>--&gt;</code> for association, <code>*--</code> for composition, <code>&lt;|--</code> for inheritance. The example diagram on the right updates live as you type.
+              </p>
             </div>
             <div className="diagram-preview-col">
               <MermaidLivePreview chart={form.classDiagram || exampleDiagram} />
@@ -130,7 +142,7 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
             value={form.methodSignatures}
             onChange={(e) => setForm({ ...form, methodSignatures: e.target.value })}
           />
-          <p className="form-hint">Text or pseudocode of key method signatures and attributes per class.</p>
+          <p className="form-hint">Pseudocode or TypeScript-style signatures for your main classes. Don't need to be perfect — focus on which methods go on which class.</p>
         </div>
 
         {/* Section 3: Responsibility Breakdown */}
@@ -141,11 +153,11 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
           <textarea
             className="form-textarea"
             rows={4}
-            placeholder="Explain why you assigned responsibilities the way you did. Why is pricing calculation separate from spot allocation?"
+            placeholder="e.g. PricingStrategy is separate from ParkingSpot because pricing logic varies by vehicle type and duration — separating them lets us change pricing without touching allocation logic (Single Responsibility Principle)."
             value={form.responsibilities}
             onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
           />
-          <p className="form-hint">Focus on Single Responsibility, Encapsulation, and separation of concerns.</p>
+          <p className="form-hint">Why did you assign responsibilities this way? What is each class responsible for and why?</p>
         </div>
 
         {/* Section 4: Trade-offs */}
@@ -156,11 +168,11 @@ export function AttemptWorkspacePage({ attemptId, problemSlug, onDone, onBack }:
           <textarea
             className="form-textarea"
             rows={4}
-            placeholder="What explicit trade-offs did you make? (e.g. 'I chose Strategy pattern for pricing to allow dynamic algorithms, but it adds extra interface classes.')"
+            placeholder="e.g. I used Singleton for ParkingLot for simpler state management, but this makes horizontal scaling harder. I'd add a distributed lock or external store if running across multiple servers."
             value={form.tradeoffs}
             onChange={(e) => setForm({ ...form, tradeoffs: e.target.value })}
           />
-          <p className="form-hint">Required (minimum 20 characters). State what you compromised on and why.</p>
+          <p className="form-hint">What compromises did you consciously make? Every design has trade-offs — name at least one.</p>
         </div>
 
         {error && (

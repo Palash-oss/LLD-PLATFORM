@@ -5,9 +5,11 @@ import { ProblemDetailPage } from './pages/ProblemDetailPage';
 import { AttemptWorkspacePage } from './pages/AttemptWorkspacePage';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { HistoryPage } from './pages/HistoryPage';
+import { LandingPage } from './pages/LandingPage';
 import { Layers, BookOpen, Clock } from 'lucide-react';
 
 export type Route =
+  | { name: 'landing' }
   | { name: 'problems' }
   | { name: 'problem'; slug: string }
   | { name: 'attempt'; attemptId: string; problemSlug: string }
@@ -15,40 +17,45 @@ export type Route =
   | { name: 'history' };
 
 export default function App() {
-  const [route, setRoute] = useState<Route>({ name: 'problems' });
+  const [route, setRoute] = useState<Route>({ name: 'landing' });
   const go = (r: Route) => setRoute(r);
+
+  const showNav = route.name !== 'landing';
 
   return (
     <>
-      <nav className="nav">
-        <div className="nav-inner">
-          <div className="nav-brand" style={{ cursor: 'pointer' }} onClick={() => go({ name: 'problems' })}>
-            <div className="brand-icon">
-              <Layers size={18} strokeWidth={2.5} />
+      {showNav && (
+        <nav className="nav">
+          <div className="nav-inner">
+            <div className="nav-brand" style={{ cursor: 'pointer' }} onClick={() => go({ name: 'problems' })}>
+              <div className="brand-icon">
+                <Layers size={18} strokeWidth={2.5} />
+              </div>
+              <span>LLD Studio</span>
             </div>
-            <span>LLD Studio</span>
+            <div className="nav-links">
+              <button
+                className={`nav-link ${route.name === 'problems' || route.name === 'problem' || route.name === 'attempt' ? 'active' : ''}`}
+                onClick={() => go({ name: 'problems' })}
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <BookOpen size={16} />
+                <span>Problems</span>
+              </button>
+              <button
+                className={`nav-link ${route.name === 'history' ? 'active' : ''}`}
+                onClick={() => go({ name: 'history' })}
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <Clock size={16} />
+                <span>History</span>
+              </button>
+            </div>
           </div>
-          <div className="nav-links">
-            <button 
-              className={`nav-link ${route.name === 'problems' || route.name === 'problem' || route.name === 'attempt' ? 'active' : ''}`}
-              onClick={() => go({ name: 'problems' })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              <BookOpen size={16} />
-              <span>Problems</span>
-            </button>
-            <button 
-              className={`nav-link ${route.name === 'history' ? 'active' : ''}`}
-              onClick={() => go({ name: 'history' })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              <Clock size={16} />
-              <span>History</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
+      {route.name === 'landing' && <LandingPage onGetStarted={() => go({ name: 'problems' })} />}
       {route.name === 'problems' && <ProblemListPage onSelect={(slug) => go({ name: 'problem', slug })} />}
       {route.name === 'problem' && (
         <ProblemDetailPage
